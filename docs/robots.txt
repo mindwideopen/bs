@@ -1,0 +1,5 @@
+User-Agent: *
+Allow: /
+
+Host: mindwideopen.github.io
+Sitemap: https://mindwideopen.github.io/bs/sitemap.xml
