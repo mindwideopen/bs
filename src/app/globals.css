@@ -1,25 +1,52 @@
 :root {
   --font-geist-sans: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-geist-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-  --background: #e8eef4;
-  --foreground: #16202b;
-  --surface: #e8eef4;
-  --surface-strong: #f3f7fa;
-  --muted: #526273;
-  --accent: #00a8b5;
-  --accent-strong: #006f7b;
-  --accent-soft: rgba(0, 168, 181, 0.14);
-  --accent-dark: #17445c;
-  --ambient-accent: rgba(0, 168, 181, 0.08);
-  --ambient-accent-strong: rgba(0, 168, 181, 0.34);
-  --background-end: #dbe4ed;
-  --dark-section: #10263c;
-  --dark-section-elevated: #1a3a57;
-  --dark-section-deep: #0b1c2d;
-  --footer-link: #9ce8ee;
-  --focus-ring: rgba(0, 168, 181, 0.48);
-  --shadow-pressed: #b7c0ca;
-  --shadow-dark: #c0c8d2;
+  /*--background: #e8eef4;*/
+  /*--foreground: #16202b;*/
+  /*--surface: #e8eef4;*/
+  /*--surface-strong: #f3f7fa;*/
+  /*--muted: #526273;*/
+  /*--accent: #00a8b5;*/
+  /*--accent-strong: #006f7b;*/
+  /*--accent-soft: rgba(0, 168, 181, 0.14);*/
+  /*--accent-dark: #17445c;*/
+  /*--ambient-accent: rgba(0, 168, 181, 0.08);*/
+  /*--ambient-accent-strong: rgba(0, 168, 181, 0.34);*/
+  /*--background-end: #dbe4ed;*/
+  /*--dark-section: #10263c;*/
+  /*--dark-section-elevated: #1a3a57;*/
+  /*--dark-section-deep: #0b1c2d;*/
+  /*--footer-link: #9ce8ee;*/
+  /*--focus-ring: rgba(0, 168, 181, 0.48);*/
+  /*--shadow-pressed: #b7c0ca;*/
+  /*--shadow-dark: #c0c8d2;*/
+  /*--shadow-light: #ffffff;*/
+  --background: #e4edf6;
+  --foreground: #132235;
+  --surface: #e4edf6;
+  --surface-strong: #f1f6fb;
+
+  --muted: #4c6178;
+
+  --accent: #008fb8;
+  --accent-strong: #005f86;
+  --accent-soft: #008fb824;
+  --accent-dark: #143f63;
+
+  --ambient-accent: #008fb814;
+  --ambient-accent-strong: #008fb857;
+
+  --background-end: #d3e0ec;
+
+  --dark-section: #0d2743;
+  --dark-section-elevated: #173d63;
+  --dark-section-deep: #071a2e;
+
+  --footer-link: #9bdff4;
+  --focus-ring: #008fb87a;
+
+  --shadow-pressed: #aebdcb;
+  --shadow-dark: #b9c7d5;
   --shadow-light: #ffffff;
 }
 
