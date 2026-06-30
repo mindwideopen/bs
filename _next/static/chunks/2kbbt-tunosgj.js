@@ -1,0 +1,1 @@
+(globalThis.TURBOPACK||(globalThis.TURBOPACK=[])).push(["object"==typeof document?document.currentScript:void 0,53153,e=>{"use strict";var t=e.i(35337),i=e.i(4699),c=e.i(36690);e.s(["LandingPage",0,function(){let e,n=(0,i.c)(1);return n[0]===Symbol.for("react.memo_cache_sentinel")?(e=(0,t.jsx)(c.BalticStyleLanding,{}),n[0]=e):e=n[0],e}],53153)}]);
