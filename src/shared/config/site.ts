@@ -1,4 +1,4 @@
-const fallbackSiteUrl = "https://balticstyle.ru";
+const fallbackSiteUrl = "https://mindwideopen.github.io/bs/";
 
 function createSiteUrl() {
   try {
@@ -30,5 +30,8 @@ export const siteConfig = {
 };
 
 export function absoluteUrl(path = "/") {
-  return new URL(path, siteConfig.url).toString();
+  const basePath = siteConfig.url.pathname.replace(/\/$/, "");
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+
+  return new URL(`${basePath}${normalizedPath}`, siteConfig.url.origin).toString();
 }

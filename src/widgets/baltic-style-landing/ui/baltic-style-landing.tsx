@@ -1,9 +1,19 @@
 "use client";
 
-import { type ReactElement, useRef } from "react";
+import {
+  type PointerEvent,
+  type ReactElement,
+  type ReactNode,
+  type WheelEvent,
+  useCallback,
+  useEffect,
+  useRef,
+} from "react";
+import useEmblaCarousel from "embla-carousel-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import styled from "styled-components";
 import { balticStyle, type ProjectIconName } from "@/entities/baltic-style";
-import { handleSmoothAnchorClick } from "@/features/smooth-anchor-navigation";
 import { ThemeToggleButton } from "@/features/theme-switcher";
 import patchcords from "@/assets/patchcords.png";
 
@@ -36,21 +46,25 @@ function Icon({ name }: { name: ProjectIconName | "phone" }) {
   );
 }
 
-export function BalticStyleLanding() {
-  const sliderRef = useRef<HTMLDivElement>(null);
+type SliderDirection = "prev" | "next";
 
-  const scrollSlider = (direction: -1 | 1) => {
-    sliderRef.current?.scrollBy({
-      left: direction * 320,
-      behavior: "smooth",
-    });
-  };
+const PROJECT_SLIDER_SPEED = 0.045;
+const PROJECT_SLIDER_RESUME_DELAY = 700;
+const PROJECT_SLIDER_COPY_COUNT = 3;
+
+type BalticStyleShellProps = {
+  children: ReactNode;
+};
+
+export function BalticStyleShell({ children }: BalticStyleShellProps) {
+  const pathname = usePathname();
+  const normalizedPathname = pathname.replace(/\/$/, "") || "/";
 
   return (
     <>
       <TopBar aria-labelledby="company-title">
         <ContentRow>
-          <CompanyBlock>
+          <CompanyBlock href="/" prefetch={false} aria-label={`${balticStyle.company.name}: на главную`}>
             <Logo aria-hidden="true">{balticStyle.company.logoText}</Logo>
             <CompanyText>
               <h1 id="company-title">{balticStyle.company.name}</h1>
@@ -64,16 +78,165 @@ export function BalticStyleLanding() {
         </ContentRow>
       </TopBar>
 
-      <NavSection aria-label="Основная навигация  ">
+      <NavSection aria-label="Основная навигация">
         <NavList>
-          {balticStyle.navItems.map((item) => (
-            <NavLink key={item.targetId} href={`#${item.targetId}`} onClick={handleSmoothAnchorClick}>
-              {item.label}
-            </NavLink>
-          ))}
+          {balticStyle.navItems.map((item) => {
+            const isActive = normalizedPathname === item.href;
+
+            return (
+              <NavLink
+                key={item.href}
+                href={item.href}
+                prefetch={false}
+                $active={isActive}
+                aria-current={isActive ? "page" : undefined}
+              >
+                {item.label}
+              </NavLink>
+            );
+          })}
         </NavList>
       </NavSection>
 
+      <MainContent id="main-content">{children}</MainContent>
+
+      <Footer>
+        <FooterInner>
+          <FooterContent>
+            <b>{balticStyle.company.name}</b>
+            <p>{balticStyle.footer.copyright}</p>
+            <p>{balticStyle.footer.address}</p>
+            <p>{balticStyle.footer.phones}</p>
+            <p>{balticStyle.footer.requisites}</p>
+            <a href={`mailto:${balticStyle.company.email}`}>{balticStyle.footer.email}</a>
+          </FooterContent>
+          <ThemeSlot>
+            <ThemeToggleButton />
+          </ThemeSlot>
+        </FooterInner>
+      </Footer>
+    </>
+  );
+}
+
+export function BalticStyleLanding() {
+  const [projectSliderRef, projectSliderApi] = useEmblaCarousel({
+    align: "start",
+    dragFree: true,
+    loop: true,
+    skipSnaps: true,
+    slidesToScroll: 1,
+  });
+  const sliderDirectionRef = useRef<SliderDirection>("next");
+  const isProjectSliderPausedRef = useRef(false);
+  const resumeProjectSliderTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastPointerXRef = useRef(0);
+  const isPointerTrackingRef = useRef(false);
+
+  const clearProjectSliderResume = useCallback(() => {
+    if (resumeProjectSliderTimeoutRef.current) {
+      clearTimeout(resumeProjectSliderTimeoutRef.current);
+      resumeProjectSliderTimeoutRef.current = null;
+    }
+  }, []);
+
+  const pauseProjectSlider = useCallback(() => {
+    clearProjectSliderResume();
+    isProjectSliderPausedRef.current = true;
+  }, [clearProjectSliderResume]);
+
+  const resumeProjectSlider = useCallback(
+    (delay = PROJECT_SLIDER_RESUME_DELAY) => {
+      clearProjectSliderResume();
+
+      resumeProjectSliderTimeoutRef.current = setTimeout(() => {
+        isProjectSliderPausedRef.current = false;
+        resumeProjectSliderTimeoutRef.current = null;
+      }, delay);
+    },
+    [clearProjectSliderResume],
+  );
+
+  useEffect(() => clearProjectSliderResume, [clearProjectSliderResume]);
+
+  useEffect(() => {
+    if (!projectSliderApi) {
+      return;
+    }
+
+    let frameId = 0;
+    let previousTime = 0;
+
+    const animateProjectSlider = (time: number) => {
+      const elapsed = previousTime ? Math.min(time - previousTime, 48) : 0;
+      previousTime = time;
+
+      if (isProjectSliderPausedRef.current) {
+        frameId = window.requestAnimationFrame(animateProjectSlider);
+        return;
+      }
+
+      const engine = projectSliderApi.internalEngine();
+      const direction = sliderDirectionRef.current === "next" ? -1 : 1;
+      const distance = direction * PROJECT_SLIDER_SPEED * elapsed;
+
+      engine.location.add(distance);
+      engine.target.set(engine.location);
+      engine.previousLocation.set(engine.location);
+      engine.offsetLocation.set(engine.location);
+      engine.scrollLooper.loop(direction);
+      engine.slideLooper.loop();
+      engine.translate.to(engine.location.get());
+      projectSliderApi.emit("scroll");
+
+      frameId = window.requestAnimationFrame(animateProjectSlider);
+    };
+
+    frameId = window.requestAnimationFrame(animateProjectSlider);
+
+    return () => window.cancelAnimationFrame(frameId);
+  }, [projectSliderApi]);
+
+  const handleProjectSliderPointerDown = (event: PointerEvent<HTMLDivElement>) => {
+    if (event.pointerType === "mouse" && event.button !== 0) {
+      return;
+    }
+
+    pauseProjectSlider();
+    isPointerTrackingRef.current = true;
+    lastPointerXRef.current = event.clientX;
+  };
+
+  const handleProjectSliderPointerMove = (event: PointerEvent<HTMLDivElement>) => {
+    if (!isPointerTrackingRef.current) {
+      return;
+    }
+
+    const pointerDelta = event.clientX - lastPointerXRef.current;
+
+    if (Math.abs(pointerDelta) > 0.5) {
+      sliderDirectionRef.current = pointerDelta > 0 ? "prev" : "next";
+      lastPointerXRef.current = event.clientX;
+    }
+  };
+
+  const finishProjectSliderDrag = () => {
+    isPointerTrackingRef.current = false;
+    resumeProjectSlider();
+  };
+
+  const handleProjectSliderWheel = (event: WheelEvent<HTMLDivElement>) => {
+    if (Math.abs(event.deltaX) < 1) {
+      return;
+    }
+
+    sliderDirectionRef.current = event.deltaX > 0 ? "next" : "prev";
+    pauseProjectSlider();
+    resumeProjectSlider();
+  };
+
+  return (
+    <>
       <PromoSection>
         <PromoInner>
           <PromoCopy>
@@ -82,9 +245,8 @@ export function BalticStyleLanding() {
           </PromoCopy>
           <PhotoPlaceholder role="img" aria-label="Заглушка фотографии IT-инфраструктуры">
             <Image
-                src={patchcords.src}
-                alt="Патч-корды и сетевая инфраструктура"
-
+              src={patchcords.src}
+              alt="Патч-корды и сетевая инфраструктура"
             />
           </PhotoPlaceholder>
         </PromoInner>
@@ -107,24 +269,33 @@ export function BalticStyleLanding() {
         <ContentColumn>
           <SectionHeadRow>
             <SectionTitle id="baltic-projects-title">Реализованные проекты</SectionTitle>
-              <SliderControls aria-label="Управление слайдером проектов">
-              <ControlButton type="button" onClick={() => scrollSlider(-1)} aria-label="Предыдущие проекты">
-                {"<"}
-              </ControlButton>
-              <ControlButton type="button" onClick={() => scrollSlider(1)} aria-label="Следующие проекты">
-                {">"}
-              </ControlButton>
-            </SliderControls>
           </SectionHeadRow>
-          <ProjectSlider ref={sliderRef} tabIndex={0} aria-label="Слайдер реализованных проектов">
-            {balticStyle.projectSliderItems.map((item) => (
-              <ProjectSlide key={item.label}>
-                <IconBox>
-                  <Icon name={item.icon} />
-                </IconBox>
-                <span>{item.label}</span>
-              </ProjectSlide>
-            ))}
+          <ProjectSlider>
+            <ProjectSliderViewport
+              ref={projectSliderRef}
+              tabIndex={0}
+              aria-label="Слайдер реализованных проектов"
+              onBlur={() => resumeProjectSlider()}
+              onFocus={pauseProjectSlider}
+              onPointerCancel={finishProjectSliderDrag}
+              onPointerDown={handleProjectSliderPointerDown}
+              onPointerMove={handleProjectSliderPointerMove}
+              onPointerUp={finishProjectSliderDrag}
+              onWheel={handleProjectSliderWheel}
+            >
+              <ProjectTrack>
+                {Array.from({ length: PROJECT_SLIDER_COPY_COUNT }, (_, copyIndex) =>
+                  balticStyle.projectSliderItems.map((item) => (
+                    <ProjectSlide key={`${copyIndex}-${item.label}`}>
+                      <IconBox>
+                        <Icon name={item.icon} />
+                      </IconBox>
+                      <span>{item.label}</span>
+                    </ProjectSlide>
+                  )),
+                )}
+              </ProjectTrack>
+            </ProjectSliderViewport>
           </ProjectSlider>
         </ContentColumn>
       </ProjectsSection>
@@ -194,22 +365,6 @@ export function BalticStyleLanding() {
           </ContactForm>
         </ContactGrid>
       </ContactSection>
-
-      <Footer>
-        <FooterInner>
-          <FooterContent>
-            <b>{balticStyle.company.name}</b>
-            <p>{balticStyle.footer.copyright}</p>
-            <p>{balticStyle.footer.address}</p>
-            <p>{balticStyle.footer.phones}</p>
-            <p>{balticStyle.footer.requisites}</p>
-            <a href={`mailto:${balticStyle.company.email}`}>{balticStyle.footer.email}</a>
-          </FooterContent>
-          <ThemeSlot>
-            <ThemeToggleButton />
-          </ThemeSlot>
-        </FooterInner>
-      </Footer>
     </>
   );
 }
@@ -231,28 +386,44 @@ const BaseSection = styled.section`
 
 const RaisedAnchor = styled.a`
   position: relative;
-  border: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  transform: translate3d(0, 0, 0);
+  will-change: transform, box-shadow;
+
+  border: 2px solid transparent;
   background: var(--surface);
-  box-shadow: 8px 8px 18px var(--shadow-dark), -8px -8px 18px var(--shadow-light);
+
+  box-shadow:
+      8px 8px 18px var(--shadow-dark),
+      -8px -8px 18px var(--shadow-light);
+
   transition:
-    box-shadow 300ms ease,
-    transform 300ms ease,
-    color 300ms ease,
-    background 300ms ease;
+      transform 350ms cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 350ms cubic-bezier(0.22, 1, 0.36, 1),
+      border-color 250ms ease,
+      color 250ms ease,
+      background-color 250ms ease;
 
   &:hover {
-    transform: translateY(1px);
+    transform: translate3d(0, -4px, 0);
+    border-color: #0b1c2d;
+
     box-shadow:
-      inset 3px 3px 7px var(--shadow-dark),
-      inset -3px -3px 7px var(--shadow-light);
+        12px 16px 26px var(--shadow-dark),
+        -12px -12px 24px var(--shadow-light);
   }
 
   &:active {
-    transform: translateY(2px);
+    transform: translate3d(0, -1px, 0);
+
     box-shadow:
-      inset 8px 8px 16px var(--shadow-pressed),
-      inset -8px -8px 16px var(--shadow-light);
-    transition-duration: 90ms;
+        inset 8px 8px 16px var(--shadow-pressed),
+        inset -8px -8px 16px var(--shadow-light);
+
+    transition-duration: 80ms;
   }
 `;
 
@@ -261,18 +432,6 @@ const RaisedButton = styled.button`
   border: 0;
   background: var(--surface);
   box-shadow: 8px 8px 18px var(--shadow-dark), -8px -8px 18px var(--shadow-light);
-  transition:
-    box-shadow 300ms ease,
-    transform 300ms ease,
-    color 300ms ease,
-    background 300ms ease;
-
-  &:hover {
-    transform: translateY(1px);
-    box-shadow:
-      inset 3px 3px 7px var(--shadow-dark),
-      inset -3px -3px 7px var(--shadow-light);
-  }
 
   &:active {
     transform: translateY(2px);
@@ -284,30 +443,29 @@ const RaisedButton = styled.button`
 `;
 
 const RaisedLabel = styled.label`
-  position: relative;
-  border: 0;
-  background: var(--surface);
-  box-shadow: 8px 8px 18px var(--shadow-dark), -8px -8px 18px var(--shadow-light);
-  transition:
-    box-shadow 300ms ease,
-    transform 300ms ease,
+    position: relative;
+    border: 0;
+    background: var(--surface);
+    box-shadow: 8px 8px 18px var(--shadow-dark), -8px -8px 18px var(--shadow-light);
+    transition: box-shadow 300ms ease,
+    transform 1000ms ease,
     color 300ms ease,
-    background 300ms ease;
+    background 300ms ease,
+    scale 300ms ease;
 
-  &:hover {
-    transform: translateY(1px);
-    box-shadow:
-      inset 3px 3px 7px var(--shadow-dark),
-      inset -3px -3px 7px var(--shadow-light);
-  }
 
-  &:active {
-    transform: translateY(2px);
-    box-shadow:
-      inset 8px 8px 16px var(--shadow-pressed),
-      inset -8px -8px 16px var(--shadow-light);
-    transition-duration: 90ms;
-  }
+    &:hover {
+        transform: translateY(1px);
+        box-shadow: inset 3px 3px 7px var(--shadow-dark),
+        inset -3px -3px 7px var(--shadow-light);
+    }
+
+    &:active {
+        transform: translateY(2px);
+        box-shadow: inset 8px 8px 16px var(--shadow-pressed),
+        inset -8px -8px 16px var(--shadow-light);
+        transition-duration: 90ms;
+    }
 `;
 
 const ContentRow = styled(Shell)`
@@ -332,6 +490,14 @@ const NarrowContent = styled(Shell)`
   gap: 22px;
 `;
 
+const MainContent = styled.main`
+  min-height: 100vh;
+  color: var(--foreground);
+  background:
+    linear-gradient(115deg, var(--ambient-accent) 0%, transparent 38%),
+    linear-gradient(180deg, var(--surface-strong) 0%, var(--background) 42%, var(--background-end) 100%);
+`;
+
 const TopBar = styled.header`
   position: relative;
   display: grid;
@@ -340,11 +506,14 @@ const TopBar = styled.header`
   padding: 28px 0;
 `;
 
-const CompanyBlock = styled.div`
+const CompanyBlock = styled(Link)`
   display: flex;
   align-items: center;
   gap: 20px;
   min-width: 0;
+  border-radius: 28px;
+  color: inherit;
+  text-decoration: none;
 `;
 
 const Logo = styled.div`
@@ -419,22 +588,62 @@ const NavList = styled(Shell)`
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-  justify-content: center;
+  justify-content: space-evenly;
 `;
 
-const NavLink = styled(RaisedAnchor)`
+const NavLink = styled(Link)<{ $active?: boolean }>`
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  transform: translate3d(0, 0, 0);
+  will-change: transform, box-shadow;
   min-height: 44px;
   min-width: 0;
   padding: 0 16px;
+  border: 2px solid ${({ $active }) => ($active ? "var(--accent-strong)" : "transparent")};
   border-radius: 999px;
   color: #30485b;
+  background: var(--surface);
+  box-shadow: 8px 8px 18px var(--shadow-dark), -8px -8px 18px var(--shadow-light);
   font-size: 14px;
   font-weight: 700;
   overflow-wrap: anywhere;
   text-align: center;
+  transition:
+    transform 300ms ease,
+    box-shadow 300ms ease,
+    border-color 300ms ease,
+    color 300ms ease,
+    background-color 300ms ease;
+
+  &::after {
+    position: absolute;
+    right: 18px;
+    bottom: -10px;
+    left: 18px;
+    height: 3px;
+    border-radius: 999px;
+    background: var(--accent-strong);
+    content: "";
+    transform: scaleX(${({ $active }) => ($active ? 1 : 0)});
+    transform-origin: center;
+    transition: transform 240ms ease;
+  }
+
+  &:hover {
+    transform: translate3d(0, -2px, 0);
+    border-color: #0b1c2d;
+    box-shadow: 10px 12px 22px var(--shadow-dark), -10px -10px 22px var(--shadow-light);
+  }
+
+  &:active {
+    transform: translate3d(0, 0, 0);
+    box-shadow:
+      inset 6px 6px 14px var(--shadow-pressed),
+      inset -6px -6px 14px var(--shadow-light);
+    transition-duration: 90ms;
+  }
 `;
 
 const PromoSection = styled(BaseSection)`
@@ -485,21 +694,14 @@ const PromoCopy = styled.div`
 const PhotoPlaceholder = styled.div`
   position: relative;
   overflow: hidden;
-  min-height: 248px;
+  min-height: 268px;
+  min-width: 300px;
   border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 24px;
   background:
     linear-gradient(135deg, var(--ambient-accent-strong), transparent 55%),
     linear-gradient(145deg, var(--dark-section-elevated), var(--dark-section-deep));
   box-shadow: inset 12px 12px 28px rgba(0, 0, 0, 0.22), inset -10px -10px 24px rgba(255, 255, 255, 0.05);
-
-  &::after {
-    position: absolute;
-    inset: 22px;
-    border: 1px solid rgba(255, 255, 255, 0.22);
-    border-radius: 18px;
-    content: "";
-  }
 `;
 
 const AboutSection = styled(BaseSection)`
@@ -554,36 +756,43 @@ const SectionHeadRow = styled.div`
   }
 `;
 
-const SliderControls = styled.div`
-  display: flex;
-  gap: 10px;
-`;
-
-const ControlButton = styled(RaisedButton)`
-  display: grid;
-  width: 44px;
-  height: 44px;
-  place-items: center;
-  border-radius: 50%;
-  color: #173f4b;
-  font: inherit;
-  font-size: 24px;
-  cursor: pointer;
-`;
-
 const ProjectSlider = styled.div`
-  display: grid;
-  grid-auto-columns: minmax(190px, 1fr);
-  grid-auto-flow: column;
+  position: relative;
+  left: 50%;
+  width: 100vw;
+  max-width: 100vw;
+  min-width: 0;
+  margin-left: -50vw;
+  margin-right: -50vw;
+  overflow: visible;
+`;
+
+const ProjectSliderViewport = styled.div`
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  margin: -18px 0 -28px;
+  padding: 26px clamp(16px, 3vw, 40px) 32px;
+  cursor: grab;
+  outline: none;
+  touch-action: pan-y pinch-zoom;
+  user-select: none;
+
+  &:active {
+    cursor: grabbing;
+  }
+`;
+
+const ProjectTrack = styled.div`
+  display: flex;
   gap: 18px;
-  overflow-x: auto;
-  padding: 6px 4px 18px;
-  scroll-snap-type: x mandatory;
-  scrollbar-width: thin;
 `;
 
 const ProjectSlide = styled.article`
   display: grid;
+  flex: 0 0 clamp(180px, 22vw, 232px);
+  min-width: 0;
   min-height: 176px;
   place-items: center;
   gap: 16px;
@@ -591,7 +800,6 @@ const ProjectSlide = styled.article`
   border-radius: 22px;
   background: var(--surface);
   box-shadow: 12px 12px 24px var(--shadow-dark), -12px -12px 24px var(--shadow-light);
-  scroll-snap-align: start;
   text-align: center;
 
   span {
@@ -885,9 +1093,9 @@ const ThemeSlot = styled.div`
     justify-content: flex-start;
   }
 `;
- const Image = styled.img`
-   display: block;
-   width: 100%;
-   height: auto;
-   object-fit: cover;
- `
+const Image = styled.img`
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+`;

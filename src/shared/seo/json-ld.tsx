@@ -26,7 +26,7 @@ export const siteJsonLd = {
       "@id": absoluteUrl("/#local-business"),
       name: siteConfig.name,
       url: absoluteUrl("/"),
-      image: absoluteUrl("/hero-integration.png"),
+      image: absoluteUrl("/favicon.ico"),
       email: siteConfig.email,
       telephone: siteConfig.phone,
       priceRange: "$$$",

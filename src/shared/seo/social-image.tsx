@@ -53,7 +53,7 @@ export function createSocialImage() {
         <div style={{ display: "flex", flexDirection: "column", gap: "26px" }}>
           <div
             style={{
-              width: "fit-content",
+              alignSelf: "flex-start",
               padding: "14px 22px",
               borderRadius: 999,
               color: "#006f7b",

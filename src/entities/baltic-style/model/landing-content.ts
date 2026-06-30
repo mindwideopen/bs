@@ -10,11 +10,11 @@ export const balticStyle = {
     email: "info@balticstyle.ru",
   },
   navItems: [
-    { label: "О компании", targetId: "baltic-about" },
-    { label: "Продукты, технологии, услуги", targetId: "baltic-directions" },
-    { label: "Партнёры", targetId: "baltic-partners" },
-    { label: "Новости", targetId: "baltic-news" },
-    { label: "Контакты", targetId: "baltic-contact" },
+    { label: "О компании", href: "/about", targetId: "baltic-about" },
+    { label: "Продукты, технологии, услуги", href: "/products", targetId: "baltic-directions" },
+    { label: "Партнёры", href: "/partners", targetId: "baltic-partners" },
+    { label: "Новости", href: "/news", targetId: "baltic-news" },
+    { label: "Контакты", href: "/contacts", targetId: "baltic-contact" },
   ],
   hero: {
     title: "Оптимальные IT-решения",

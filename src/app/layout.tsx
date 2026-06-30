@@ -1,19 +1,9 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import { siteConfig } from "@/shared/config/site";
 import { JsonLd, siteJsonLd } from "@/shared/seo/json-ld";
+import { BalticStyleShell } from "@/widgets/baltic-style-landing";
 import { StyledComponentsRegistry } from "./_providers/styled-components-registry";
 import "./globals.css";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   metadataBase: siteConfig.url,
@@ -71,13 +61,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang={siteConfig.lang} className={`${geistSans.variable} ${geistMono.variable}`}>
+    <html lang={siteConfig.lang}>
       <body>
         <a className="skip-link" href="#main-content">
           Skip to content
         </a>
         <JsonLd data={siteJsonLd} />
-        <StyledComponentsRegistry>{children}</StyledComponentsRegistry>
+        <StyledComponentsRegistry>
+          <BalticStyleShell>{children}</BalticStyleShell>
+        </StyledComponentsRegistry>
       </body>
     </html>
   );

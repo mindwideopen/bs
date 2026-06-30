@@ -1,1 +1,1 @@
-export { BalticStyleLanding } from "./ui/baltic-style-landing";
+export { BalticStyleLanding, BalticStyleShell } from "./ui/baltic-style-landing";
