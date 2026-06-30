@@ -150,6 +150,7 @@
   gap: 10px;
   justify-content: space-evenly;
 `,eA=(0,A.default)(I.default).withConfig({displayName:"baltic-style-landing__NavLink",componentId:"sc-50a68381-9"})`
+  margin:10px ;
   position: relative;
   display: inline-flex;
   align-items: center;
