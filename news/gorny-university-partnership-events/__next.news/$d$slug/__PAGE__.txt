@@ -1,0 +1,6 @@
+1:"$Sreact.fragment"
+2:I[55321,["/bs/_next/static/chunks/3ncmiq_85t35q.js","/bs/_next/static/chunks/1vo7jdnt_ei1v.js","/bs/_next/static/chunks/39umdegs_tl__.js","/bs/_next/static/chunks/2gnjkjirv21_f.js"],"NewsDetailPage"]
+3:I[62310,["/bs/_next/static/chunks/3w191gstjnfbw.js","/bs/_next/static/chunks/16utz48s_1wv7.js"],"OutletBoundary"]
+4:"$Sreact.suspense"
+0:{"rsc":["$","$1","c",{"children":[["$","$L2",null,{"article":{"slug":"gorny-university-partnership-events","title":"«Балтик Стайл» запускает серию мероприятий к юбилею партнёрства с Санкт-Петербургским Горным университетом.","date":"14 апреля 2026","dateTime":"2026-04-14","image":"","sectionTitle":"Наши новости","paragraphs":["Компания развивает партнёрские образовательные инициативы и готовит серию мероприятий, посвящённых сотрудничеству с Санкт-Петербургским Горным университетом.","В фокусе программы — обмен инженерной экспертизой, развитие практических форматов и обсуждение современных инфраструктурных решений."]}}],[["$","script","script-0",{"src":"/bs/_next/static/chunks/2gnjkjirv21_f.js","async":true}]],["$","$L3",null,{"children":["$","$4",null,{"name":"Next.MetadataOutlet","children":"$@5"}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"re6KDVAUtb4ZotCeUj8Rl"}
+5:null
